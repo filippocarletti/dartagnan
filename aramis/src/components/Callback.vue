@@ -1,5 +1,5 @@
 <template>
-  <div class="spinner spinner-lg absolute-center"></div>
+  <div class="spinner spinner-lg spinner-inverse absolute-center"></div>
 </template>
 
 <script>
@@ -9,11 +9,13 @@
   export default {
     name: 'callback',
     mixins: [LoginService, StorageService],
+    props: ['action'],
     data() {
       var context = this
+      this.$parent.showBody()
       this.auth0Handler(function (path) {
         context.$router.push({
-          path: path
+          path: context.$parent.handleAction(context.action, path)
         })
       })
       return {}
@@ -23,5 +25,6 @@
 </script>
 
 <style scoped>
+
 
 </style>

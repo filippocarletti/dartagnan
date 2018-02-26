@@ -23,7 +23,7 @@
                 <img class="profile-picture-mini" :src="user.picture" />
                 <p class="login-main-name">{{ user.name }}</p>
                 <p class="login-main-type">
-                  {{ user.nickname }}
+                  {{ user.email }}
                   <span class="caret"></span>
                 </p>
               </a>
@@ -46,7 +46,7 @@
                   <a target="blank" href="https://github.com/nethesis/dartagnan">{{ $t("menu.help") }}</a>
                 </li>
                 <li>
-                  <a href="#" data-toggle="modal" data-target="#about-modal">{{ $t("menu.about") }}</a>
+                  <a href="" data-toggle="modal" data-target="#about-modal">{{ $t("menu.about") }}</a>
                 </li>
               </ul>
             </li>
@@ -135,13 +135,45 @@
       <!-- end left menu -->
       <!-- main view -->
       <div class="container-fluid container-cards-pf container-pf-nav-pf-vertical nav-pf-persistent-secondary">
-        <router-view></router-view>
+        <router-view :action="action"></router-view>
       </div>
       <!-- end main view -->
     </div>
     <div v-if="!isLogged">
-      <router-view></router-view>
+      <router-view :action="action"></router-view>
     </div>
+
+    <!-- modals -->
+    <div class="modal fade" id="about-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content about-modal-pf">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+              <span class="pficon pficon-close"></span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <h1>Aramis</h1>
+            <div class="product-versions-pf">
+              <ul class="list-unstyled">
+                <li>
+                  <strong>Athos</strong>
+                  <a target="blank" href="https://github.com/nethesis/dartagnan/tree/master/athos">GitHub</a>
+                </li>
+                <li>
+                  <strong>Aramis</strong>
+                  <a target="blank" href="https://github.com/nethesis/dartagnan/tree/master/aramis">GitHub</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <img class="about-logo" src="./assets/logo.png" alt="Patternfly Symbol">
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end modals -->
   </div>
 </template>
 
@@ -152,6 +184,9 @@
   import {
     setTimeout
   } from 'timers';
+  import {
+    error
+  } from 'util';
 
   export default {
     name: 'app',
@@ -161,13 +196,22 @@
       var isLogged = this.auth0CheckAuth()
       var user = this.get('logged_user') || null
 
-      if (this.$route.path == '/callback') {
+      // save route query params
+      if (Object.keys(this.get('query_params') || {}).length == 0) {
+        if (Object.keys(this.$route.query).length > 0) {
+          this.set('query_params', this.$route.query)
+        }
+      }
 
-      } else {
+      // get action if exists
+      var action = this.get('query_params') && this.get('query_params').action || null
+
+      if (this.$route.path !== '/callback') {
         if (isLogged) {
           this.initGraphics()
+          // handle action
           this.$router.push({
-            path: this.$route.path
+            path: this.handleAction(action)
           })
         } else {
           this.showBody()
@@ -180,18 +224,29 @@
       return {
         user: user,
         isLogged: isLogged,
+        action: action
       }
     },
     methods: {
+      handleAction(action, path) {
+        switch (action) {
+          case 'newServer':
+          this.isLogged = this.auth0CheckAuth()
+            this.initGraphics()
+            return 'servers'
+
+          default:
+            return this.$route.path == '/' ? 'dashboard' : path || this.$route.path
+        }
+      },
       getCurrentPath(route) {
         return this.$route.path.split('/')[1] === route
       },
       doLogout() {
-        var context = this
-        this.auth0Logout(function () {
-          context.isLogged = false
-          context.resetGraphics()
-        })
+        this.auth0Logout()
+        this.isLogged = false
+        this.resetGraphics()
+        this.auth0Logout()
       },
       initGraphics() {
         $('body').addClass('logged')

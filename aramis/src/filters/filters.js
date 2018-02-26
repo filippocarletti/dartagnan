@@ -38,10 +38,10 @@ var Filters = {
 
     return dHours + "h " + dMins + "m " + dSecs + "s";
   },
-  formatDate: function (value) {
+  formatDate: function (value, hours=true) {
     var moment = require("patternfly/node_modules/moment/moment.js")
     if (+new Date(value) > 0)
-      return moment(String(value)).format('DD MMMM YYYY, HH:mm')
+      return moment(String(value)).format('DD MMMM YYYY' + (hours ? ', HH:mm' : ''))
     else
       return '-'
   },
