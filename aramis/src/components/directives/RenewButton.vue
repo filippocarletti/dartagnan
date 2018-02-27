@@ -209,6 +209,9 @@
         this.errors.state = false
         this.currentPlan = this.obj.subscription.subscription_plan.code != 'trial' ? this.obj.subscription.subscription_plan :
           this.plans[1]
+        if(this.obj.subscription.subscription_plan.code == 'trial') {
+          this.currentPlan.full_price = this.plans[1].price
+        }
         this.onUpgradePriceCalc = false
         this.onUpgrade = this.obj.subscription.subscription_plan.code != 'trial' ? false : true
         $('#paymentModalRenew-' + this.obj.id).modal('toggle')
@@ -236,6 +239,7 @@
             context.onUpgrade = true
             context.currentPlan = plan
             context.currentPlan.price = data.price
+            context.currentPlan.full_price = data.full_price
           })
         } else {
           this.onUpgrade = false
