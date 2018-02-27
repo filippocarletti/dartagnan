@@ -143,7 +143,7 @@
               </div>
               <div class="card-pf-item">
                 <span v-if="!isExpired(s.subscription.valid_until)" class="pficon pficon-ok"></span>
-                <span v-if="isExpired(s.subscription.valid_until)" class="pficon pficon-paused"></span>
+                <span v-if="isExpired(s.subscription.valid_until)" class="pficon pficon-warning-triangle-o"></span>
               </div>
             </div>
             <p class="card-pf-info text-center">
@@ -152,7 +152,6 @@
               <span class="gray" v-if="isExpired(s.subscription.valid_until)">
                 <strong>{{$t('servers.expired')}}</strong>
               </span>
-              <button v-if="isExpired(s.subscription.valid_until)" class="btn btn-primary renew-button">{{$t('servers.renew')}}</button>
             </p>
           </div>
           <div class="card-pf-footer">

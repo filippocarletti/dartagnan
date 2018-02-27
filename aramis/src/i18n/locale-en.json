@@ -33,7 +33,7 @@
       "license_type": "License type",
       "all": "All",
       "active": "Active",
-      "not_active": "Not active",
+      "no_active": "Not active",
       "no_comm": "No communication",
       "clear_filters": "Clear all filters",
       "results": "Results",
@@ -48,6 +48,8 @@
     "payment": {
       "renew": "Renew plan",
       "upgrade": "Change plan",
+      "renew_button": "Renew",
+      "upgrade_button": "Upgrade",
       "renew_proceed": "Proceed with subscription renew?",
       "upgrade_proceed": "Proceed with subscription change?",
       "details": "Details",
@@ -56,7 +58,10 @@
       "period": "Period",
       "pay_with": "Pay with",
       "confirmed": "Confirmed",
-      "payment_id_ref": "Your payment reference is:"
+      "payment_id_ref": "Your payment reference is:",
+      "payment_error": "Error",
+      "payment_error_details": "Something went wrong...",
+      "full_price": "Full price"
     }
   }
 }

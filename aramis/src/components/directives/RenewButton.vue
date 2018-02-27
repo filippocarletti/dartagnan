@@ -1,14 +1,14 @@
 <template>
   <span>
     <button @click="showRenewModal()" type="button" class="btn btn-primary">
-      <span class="fa fa-refresh"></span>
-      Renew
+      <span class="fa fa-paypal"></span>
+      {{obj.subscription.subscription_plan.code == 'trial' ? $t('payment.upgrade_button') : $t('payment.renew_button')}}
     </button>
-    <div class="modal fade" :id="'paymentModalRenew-'+obj.id" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal fade" :id="'paymentModalRenew-'+obj.id" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+            <button @click="hideRenewModal()" type="button" class="close" data-dismiss="modal" aria-hidden="true">
               <span class="pficon pficon-close"></span>
             </button>
             <h4 class="modal-title" id="myModalLabel">{{onUpgrade ? $t('payment.upgrade') : $t('payment.renew')}}</h4>
@@ -49,7 +49,7 @@
                     </span>
                   </div>
                   <div class="card-pf-item details-pay-item">
-                    <span v-if="!onUpgradePriceCalc" >{{currentPlan.description}}</span>
+                    <span v-if="!onUpgradePriceCalc">{{currentPlan.description}}</span>
                     <div v-if="onUpgradePriceCalc" class="spinner spinner-sm"></div>
                   </div>
                 </div>
@@ -60,7 +60,7 @@
                     </span>
                   </div>
                   <div class="card-pf-item details-pay-item">
-                    <span v-if="!onUpgradePriceCalc" class="card-pf-item-text">{{currentPlan.price > 0 ? currentPlan.price : 0}} €</span>
+                    <span v-if="!onUpgradePriceCalc" class="card-pf-item-text">{{currentPlan.price > 0 ? currentPlan.price : 0}}€ <span v-if="onUpgrade && currentPlan.price != currentPlan.full_price">({{$t('payment.full_price')}}: {{currentPlan.full_price > 0 ? currentPlan.full_price : 0}}€)</span></span>
                     <div v-if="onUpgradePriceCalc" class="spinner spinner-sm"></div>
                   </div>
                 </div>
@@ -93,13 +93,15 @@
               @click="hideRenewModal()">{{$t('servers.done')}}</button>
             <div v-if="!payment.done && !errors.state && !payment.onProgress" class="card-pf-item details-pay-item">
               <span class="card-pf-item-text">
-                <strong>Pay with</strong>
+                <strong>{{$t('payment.pay_with')}}</strong>
               </span>
             </div>
             <div v-show="!payment.done && !errors.state && !payment.onProgress" :id="'paypal-button-container-'+obj.id"></div>
             <div v-if="payment.done && errors.state && !payment.onProgress" class="alert alert-danger alert-dismissable">
               <span class="pficon pficon-error-circle-o"></span>
-              <strong>Hey there is a problem!</strong>. {{errors.message}}
+              <strong>{{$t('payment.payment_error')}}</strong>. {{errors.message || $t('payment.payment_error_details')}}
+              <p>{{$t('payment.payment_id_ref')}}</p>
+              <pre class="filters-container"><strong>{{payment.details.paymentID}}</strong></pre>
             </div>
           </div>
         </div>
@@ -163,11 +165,9 @@
         },
 
         onAuthorize: function (data, actions) {
-          return actions.payment.get().then(function (paymentDetails) {
-            console.log(paymentDetails)
+          //return actions.payment.get().then(function (paymentDetails) {
             // Execute the payment
             return actions.payment.execute().then(function () {
-              console.log('Payment Complete!', data);
               context.payment.onProgress = true
               if (context.onUpgrade) {
                 context.upgradeCheck(data)
@@ -175,7 +175,7 @@
                 context.renewCheck(data)
               }
             });
-          });
+          //});
         }
 
       }, '#paypal-button-container-' + this.obj.id);
@@ -207,14 +207,15 @@
         this.payment.details = {}
         this.errors.message = ''
         this.errors.state = false
-        this.currentPlan = this.obj.subscription.subscription_plan
+        this.currentPlan = this.obj.subscription.subscription_plan.code != 'trial' ? this.obj.subscription.subscription_plan :
+          this.plans[1]
         this.onUpgradePriceCalc = false
-        this.onUpgrade = false
+        this.onUpgrade = this.obj.subscription.subscription_plan.code != 'trial' ? false : true
         $('#paymentModalRenew-' + this.obj.id).modal('toggle')
       },
       hideRenewModal() {
-        $('#paymentModalRenew-' + this.obj.id).modal('hide')
         this.update()
+        $('#paymentModalRenew-' + this.obj.id).modal('hide')
       },
       plansList() {
         this.$http.get('http://' + this.$root.$options.api_host + '/api/ui/plans', {
@@ -258,7 +259,7 @@
       },
       calculateSubscription(date, subscription) {
         var moment = require("patternfly/node_modules/moment/moment.js")
-        return moment(date, "YYYY-MM-DDTHH:mm:ss.sssZ").add(subscription.period, 'days');
+        return moment(date, "YYYY-MM-DDTHH:mm:ss").add(subscription.period, 'days');
       },
       renewCheck(payment) {
         this.$http.post('http://' + this.$root.$options.api_host + '/api/ui/systems/' + this.obj.id + '/renewal', {
@@ -274,7 +275,7 @@
         }, function (error) {
           console.error(error)
           this.payment.onProgress = false
-          this.payment.details = {}
+          this.payment.details = payment
           this.payment.done = true
           this.errors.state = true
           this.errors.message = error.body.message
@@ -295,7 +296,7 @@
         }, function (error) {
           console.error(error)
           this.payment.onProgress = false
-          this.payment.details = {}
+          this.payment.details = payment
           this.payment.done = true
           this.errors.state = true
           this.errors.message = error.body.message
